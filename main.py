@@ -1,31 +1,19 @@
-# bibliotecas e frameworks
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr
+from fastapi import FastAPI
+from routers import aluno
+import logging                  # biblioteca de registro
 
-# criou o objeto da API
-app = FastAPI()
+# Configuração do logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# banco de dados simulado (fake)
-alunos_db = {
-    "joao@iterasys.com.br": {
-        "nome": "João Cruz",
-        "validade_assinatura": "2025-12-31"
-    },
-        "maria@iterasys.com.br": {
-        "nome": "Maria Oliveira",
-        "validade_assinatura": "2026-05-15"
-    }
-}
+app = FastAPI() # instancia o objeto do framework de criação de API
 
-class AlunoRequest(BaseModel):
-    email: EmailStr
+@app.on_event("startup") # iniciar o logging
+def startup_event():
+    logger.info("API Iniciada")
 
-@app.post("/buscar-aluno")
-def buscar_aluno(dados: AlunoRequest):
-    aluno = alunos_db.get(dados.email)
-    if not aluno:
-        raise HTTPException(status_code=404, detail="Aluno não encontrado")
-    return {
-        "nome_completo": aluno["nome"],
-        "validade_assinatura": aluno["validade_assinatura"]
-    }
+@app.on_event("shutdown") # finalizar o logging
+def shutdown_event():
+    logger.info("API Finalizada")
+
+app.include_router(aluno.router, prefix="/buscar-aluno", tags=["Aluno"])
